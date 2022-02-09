@@ -81,9 +81,9 @@ const updateSnitch = () => {
     startSnitchTimeout();
     // Get random velocity for x and y (-8 to 8)
     snitch.xVel =
-      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 7 + 1);
+      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 9 + 1);
     snitch.yVel =
-      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 7 + 1);
+      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 9 + 1);
   }
 
   // Inverse the velocity if the snitch is running into a wall
