@@ -5,6 +5,7 @@ const path = require("path");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
+const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -20,6 +21,7 @@ let snitch = {
 };
 io.on("connection", (socket) => {
   console.log("a user connected");
+  io.to(socket.id).emit("id", socket.id);
   let color = colors.pop();
   players.push({
     id: socket.id,
@@ -42,12 +44,12 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(process.env.PORT, () => {
-  console.log(`listening on port ${process.env.PORT}`);
+server.listen(PORT, () => {
+  console.log(`listening on port ${PORT}`);
 });
 
 const canvasWidth = 1000;
-const canvasHeight = 1000;
+const canvasHeight = 800;
 
 const updatePlayers = () => {
   for (let player of players) {
@@ -78,9 +80,9 @@ const updateSnitch = () => {
     startSnitchTimeout();
     // Get random velocity for x and y (-8 to 8)
     snitch.xVel =
-      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 8 + 1);
+      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 1 + 1);
     snitch.yVel =
-      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 8 + 1);
+      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 1 + 1);
   }
 
   // Inverse the velocity if the snitch is running into a wall
@@ -144,10 +146,24 @@ const startGame = () => {
   }, 10);
 };
 const handleWin = (id) => {
-  console.log(tick);
   clearInterval(tick);
+  for (let player of players) {
+    player.x = canvasWidth / 2;
+    player.y = canvasHeight / 2;
+    player.size = 25;
+    player.speed = 4;
+    player.input = { up: false, down: false, left: false, right: false };
+  }
+  snitch = {
+    x: 10,
+    y: 10,
+    radius: 10,
+    xVel: 5,
+    yVel: 5,
+    canChangeDir: true,
+  };
   io.emit("gameEnd", id);
-  setTimeout(startGame(), 5000);
+  setTimeout(() => startGame(), 3000);
 };
 
 startGame();

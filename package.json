@@ -4,11 +4,10 @@
     "socket.io": "^4.4.1"
   },
   "scripts": {
-    "start": "node server.js",
-    "web": "node server.js"
+    "start": "node server.js"
   },
   "engines": {
-    "node": "16.x"
+    "node": "16.13.x"
   },
   "name": "golden_snitch",
   "version": "1.0.0",

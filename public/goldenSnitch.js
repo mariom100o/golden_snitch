@@ -4,7 +4,7 @@ class GoldenSnitchGame {
     this.ctx = ctx;
     this.canvas.width = 1000;
     this.canvas.height = 1000;
-
+    this.playerId;
     this.ctx.fillStyle = "lavender";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -35,7 +35,20 @@ class GoldenSnitchGame {
   }
 
   drawPlayers(players) {
+    console.log(this.playerId);
     for (let player of players) {
+      this.ctx.globalAlpha = 0.3;
+      if ((player.id = this.id)) {
+        this.ctx.globalAlpha = 1.0;
+        this.ctx.fillStyle = player.color;
+        this.ctx.fillRect(
+          player.x - player.size / 2,
+          player.y - player.size / 2,
+          player.size,
+          player.size
+        );
+        this.ctx.globalAlpha = 0.3;
+      }
       this.ctx.fillStyle = player.color;
       this.ctx.fillRect(
         player.x - player.size / 2,
@@ -72,6 +85,11 @@ const ctx = canvas.getContext("2d");
 const game = new GoldenSnitchGame(canvas, ctx);
 
 const socket = io();
+
+socket.on("id", (id) => {
+  console.log(id);
+  game.playerId = id;
+});
 
 socket.on("gameState", (state) => {
   game.draw(state.players, state.snitch);
