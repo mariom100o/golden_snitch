@@ -3,7 +3,7 @@ class GoldenSnitchGame {
     this.canvas = canvas;
     this.ctx = ctx;
     this.canvas.width = 1000;
-    this.canvas.height = 1000;
+    this.canvas.height = 800;
     this.playerId;
     this.ctx.fillStyle = "lavender";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
