@@ -147,6 +147,7 @@ const handleWin = (id) => {
   console.log(tick);
   clearInterval(tick);
   io.emit("gameEnd", id);
+  setTimeout(startGame(), 5000);
 };
 
 startGame();
