@@ -35,10 +35,9 @@ class GoldenSnitchGame {
   }
 
   drawPlayers(players) {
-    console.log(this.playerId);
     for (let player of players) {
-      this.ctx.globalAlpha = 0.3;
-      if ((player.id = this.id)) {
+      if (player.id === this.playerId) {
+        console.log(this.playerId);
         this.ctx.globalAlpha = 1.0;
         this.ctx.fillStyle = player.color;
         this.ctx.fillRect(
@@ -47,15 +46,18 @@ class GoldenSnitchGame {
           player.size,
           player.size
         );
+      } else {
+        console.log("Other player");
         this.ctx.globalAlpha = 0.3;
+        this.ctx.fillStyle = player.color;
+        this.ctx.fillRect(
+          player.x - player.size / 2,
+          player.y - player.size / 2,
+          player.size,
+          player.size
+        );
+        this.ctx.globalAlpha = 1.0;
       }
-      this.ctx.fillStyle = player.color;
-      this.ctx.fillRect(
-        player.x - player.size / 2,
-        player.y - player.size / 2,
-        player.size,
-        player.size
-      );
     }
   }
 

@@ -39,6 +39,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     let i = players.findIndex((item) => item.id === socket.id);
+    colors.push(players[i].color);
     players.splice(i, 1);
     console.log("user disconnected");
   });
