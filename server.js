@@ -42,8 +42,8 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(8080, () => {
-  console.log("listening on *:3000");
+server.listen(process.env.PORT, () => {
+  console.log(`listening on port ${process.env.PORT}`);
 });
 
 const canvasWidth = 1000;
