@@ -7,6 +7,9 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 
+const canvasWidth = 12800;
+const canvasHeight = 12800;
+
 app.use(express.static(path.join(__dirname, "public")));
 
 const colors = ["red", "blue", "green", "orange", "purple"];
@@ -25,12 +28,20 @@ io.on("connection", (socket) => {
   let color = colors.pop();
   players.push({
     id: socket.id,
+    windowWidth: 0,
+    windowHeight: 0,
     x: canvasWidth / 2,
     y: canvasHeight / 2,
     size: 25,
     speed: 4,
     color: color,
     input: { up: false, down: false, left: false, right: false },
+  });
+
+  socket.on("windowInfo", (windowSize) => {
+    let i = players.findIndex((item) => item.id === socket.id);
+    players[i].windowWidth = windowSize.width;
+    players[i].windowHeight = windowSize.height;
   });
 
   socket.on("playerInput", (input) => {
@@ -49,9 +60,6 @@ server.listen(PORT, () => {
   console.log(`listening on port ${PORT}`);
 });
 
-const canvasWidth = 1000;
-const canvasHeight = 800;
-
 const updatePlayers = () => {
   for (let player of players) {
     if (player.input.up) player.y -= player.speed;
@@ -62,9 +70,12 @@ const updatePlayers = () => {
     // Put the player in bounds if it ever left
     if (player.x + player.size / 2 >= canvasWidth)
       player.x = canvasWidth - player.size / 2;
+
     if (player.x - player.size / 2 <= 0) player.x = player.size / 2;
+
     if (player.y + player.size / 2 >= canvasHeight)
       player.y = canvasHeight - player.size / 2;
+
     if (player.y - player.size / 2 <= 0) player.y = player.size / 2;
   }
 };
@@ -85,7 +96,6 @@ const updateSnitch = () => {
     snitch.yVel =
       (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 9 + 1);
   }
-
   // Inverse the velocity if the snitch is running into a wall
   if (snitch.yVel < 0 && snitch.y - snitch.radius <= 0) snitch.yVel *= -1;
   if (snitch.xVel < 0 && snitch.x - snitch.radius <= 0) snitch.xVel *= -1;
@@ -93,7 +103,6 @@ const updateSnitch = () => {
     snitch.yVel *= -1;
   if (snitch.xVel > 0 && snitch.x + snitch.radius >= canvasWidth)
     snitch.xVel *= -1;
-
   // Inverse the velocity if the snitch is running into the player
   for (let player of players) {
     if (
@@ -108,10 +117,8 @@ const updateSnitch = () => {
       if (snitch.x < player.x && snitch.xVel > 0) snitch.xVel *= -1;
     }
   }
-
   snitch.x += snitch.xVel;
   snitch.y += snitch.yVel;
-
   // Put the snitch in bounds if it ever left
   if (snitch.x - snitch.radius < 0) snitch.x = snitch.radius;
   if (snitch.x + snitch.radius > canvasWidth)
@@ -141,7 +148,43 @@ const startGame = () => {
   tick = setInterval(() => {
     updatePlayers();
     updateSnitch();
-    io.emit("gameState", { players: players, snitch: snitch });
+    for (let player of players) {
+      let bgPos = {
+        sx: player.x - player.windowWidth / 2,
+        sy: player.y - player.windowHeight / 2,
+      };
+      let temp = players.filter((item) => {
+        if (
+          item.x >= player.x - (player.windowWidth / 2 + 30) &&
+          item.x <= player.x + (player.windowWidth / 2 + 30) &&
+          item.y >= player.y - (player.windowHeight / 2 + 30) &&
+          item.y <= player.y + (player.windowHeight / 2 + 30)
+        )
+          return true;
+      });
+      let nearbyPlayers = temp.filter((it) => true).map((obj) => ({ ...obj }));
+      // Define positions relative to the current player
+      for (let nearbyPlayer of nearbyPlayers) {
+        nearbyPlayer.x -= player.x;
+        nearbyPlayer.y -= player.y;
+      }
+      let relativeSnitch = { x: null, y: null, radius: null };
+      if (
+        snitch.x >= player.x - (player.windowWidth / 2 + 30) &&
+        snitch.x <= player.x + (player.windowWidth / 2 + 30) &&
+        snitch.y >= player.y - (player.windowHeight / 2 + 30) &&
+        snitch.y <= player.y + (player.windowHeight / 2 + 30)
+      ) {
+        relativeSnitch.x = snitch.x - player.x;
+        relativeSnitch.y = snitch.y - player.y;
+        relativeSnitch.radius = snitch.radius;
+      }
+      io.to(player.id).emit("gameState", {
+        nearbyPlayers: nearbyPlayers,
+        relativeSnitch: relativeSnitch,
+        bgPos: bgPos,
+      });
+    }
     let winner = checkWin();
     if (winner != -1) handleWin(winner);
   }, 10);

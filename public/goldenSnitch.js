@@ -2,11 +2,23 @@ class GoldenSnitchGame {
   constructor(canvas, ctx) {
     this.canvas = canvas;
     this.ctx = ctx;
-    this.canvas.width = 1000;
-    this.canvas.height = 800;
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
     this.playerId;
-    this.ctx.fillStyle = "lavender";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.backgroundImg = new Image();
+    this.backgroundImg.src = "/images/gridMap.jpg";
+    //this.ctx.fillStyle = this.backgoundPtrn;
+    this.ctx.drawImage(
+      this.backgroundImg,
+      12800 - this.canvas.width,
+      12800 - this.canvas.height,
+      this.canvas.width,
+      this.canvas.height,
+      0,
+      0,
+      this.canvas.width,
+      this.canvas.height
+    );
 
     this.input = { up: false, down: false, left: false, right: false };
     window.addEventListener("keydown", (e) => {
@@ -24,35 +36,51 @@ class GoldenSnitchGame {
       if (e.key === "d") this.input.right = false;
       socket.emit("playerInput", this.input);
     });
+    window.addEventListener("resize", () => {
+      this.canvas.width = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+      socket.emit("windowInfo", {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    });
   }
 
-  draw(players, snitch) {
+  draw(state) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.fillStyle = "lavender";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    this.drawPlayers(players);
-    this.drawSnitch(snitch);
+    this.ctx.drawImage(
+      this.backgroundImg,
+      state.bgPos.sx,
+      state.bgPos.sy,
+      this.canvas.width,
+      this.canvas.height,
+      0,
+      0,
+      this.canvas.width,
+      this.canvas.height
+    );
+    this.drawPlayers(state.nearbyPlayers);
+    if (state.relativeSnitch.x && state.relativeSnitch.y)
+      this.drawSnitch(state.relativeSnitch);
   }
 
   drawPlayers(players) {
     for (let player of players) {
       if (player.id === this.playerId) {
-        console.log(this.playerId);
         this.ctx.globalAlpha = 1.0;
         this.ctx.fillStyle = player.color;
         this.ctx.fillRect(
-          player.x - player.size / 2,
-          player.y - player.size / 2,
+          this.canvas.width / 2 + (player.x - player.size / 2),
+          this.canvas.height / 2 + (player.y - player.size / 2),
           player.size,
           player.size
         );
       } else {
-        console.log("Other player");
         this.ctx.globalAlpha = 0.3;
         this.ctx.fillStyle = player.color;
         this.ctx.fillRect(
-          player.x - player.size / 2,
-          player.y - player.size / 2,
+          this.canvas.width / 2 + (player.x - player.size / 2),
+          this.canvas.height / 2 + (player.y - player.size / 2),
           player.size,
           player.size
         );
@@ -64,7 +92,13 @@ class GoldenSnitchGame {
   drawSnitch(snitch) {
     this.ctx.fillStyle = "gold";
     this.ctx.beginPath();
-    this.ctx.arc(snitch.x, snitch.y, snitch.radius, 0, 2 * Math.PI);
+    this.ctx.arc(
+      this.canvas.width / 2 + snitch.x,
+      this.canvas.height / 2 + snitch.y,
+      snitch.radius,
+      0,
+      2 * Math.PI
+    );
     this.ctx.fill();
     this.ctx.closePath();
   }
@@ -83,18 +117,21 @@ class GoldenSnitchGame {
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+const socket = io();
 
 const game = new GoldenSnitchGame(canvas, ctx);
 
-const socket = io();
+socket.emit("windowInfo", {
+  width: window.innerWidth,
+  height: window.innerHeight,
+});
 
 socket.on("id", (id) => {
-  console.log(id);
   game.playerId = id;
 });
 
 socket.on("gameState", (state) => {
-  game.draw(state.players, state.snitch);
+  game.draw(state);
 });
 
 socket.on("gameEnd", (winner) => {
