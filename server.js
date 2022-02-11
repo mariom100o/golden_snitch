@@ -7,7 +7,7 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 
-const canvasWidth = 500;
+const canvasWidth = 300;
 const canvasHeight = 500;
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -24,7 +24,11 @@ let snitch = {
 };
 io.on("connection", (socket) => {
   console.log("a user connected");
-  io.to(socket.id).emit("id", socket.id);
+  io.to(socket.id).emit("init", {
+    id: socket.id,
+    gameWidth: canvasWidth,
+    gameHeight: canvasHeight,
+  });
   let color = colors.pop();
   players.push({
     id: socket.id,
@@ -39,21 +43,19 @@ io.on("connection", (socket) => {
   });
 
   socket.on("windowInfo", (windowSize) => {
-    console.log("Got window info");
     let i = players.findIndex((item) => item.id === socket.id);
     players[i].windowWidth = windowSize.width;
     players[i].windowHeight = windowSize.height;
   });
 
   socket.on("playerInput", (input) => {
-    console.log("Got player info");
-    // players.find((item) => item.id === socket.id).input = input;
+    players.find((item) => item.id === socket.id).input = input;
   });
 
   socket.on("disconnect", () => {
-    // let i = players.findIndex((item) => item.id === socket.id);
-    // colors.push(players[i].color);
-    // players.splice(i, 1);
+    let i = players.findIndex((item) => item.id === socket.id);
+    colors.push(players[i].color);
+    players.splice(i, 1);
     console.log("user disconnected");
   });
 });
@@ -82,8 +84,10 @@ const updatePlayers = () => {
   }
 };
 
+let lastUpdate = new Date().getTime();
 const updateSnitch = () => {
-  if (new Date().getTime() % 250 == 0) {
+  if (new Date().getTime() - lastUpdate >= 250) {
+    lastUpdate = new Date().getTime();
     // Get random velocity for x and y (-8 to 8)
     snitch.xVel =
       (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15 + 1);
@@ -169,7 +173,7 @@ const tick = () => {
       relativeSnitch.radius = snitch.radius;
     }
     io.to(player.id).emit("gameState", {
-      playerPos: { x: player.x, y: player.y },
+      player: { x: player.x, y: player.y, size: player.size },
       nearbyPlayers: nearbyPlayers,
       relativeSnitch: relativeSnitch,
     });

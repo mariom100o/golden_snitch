@@ -7,6 +7,8 @@ class GoldenSnitchGame {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     this.playerId;
+    this.gameWidth = 100;
+    this.gameHeight = 100;
 
     this.input = { up: false, down: false, left: false, right: false };
     window.addEventListener("keydown", (e) => {
@@ -49,44 +51,50 @@ class GoldenSnitchGame {
     });
   }
 
-  drawGrid(playerPos) {
+  drawGrid(player) {
     this.ctx.globalAlpha = 0.5;
     ctx.fillStyle = "grey";
 
+    let startX = this.canvas.width / 2 - player.x;
+    if (startX < 0) -(startX %= 100);
+    let endX = this.canvas.width / 2 + this.gameWidth - player.x;
+    while (endX >= this.canvas.width + 100) endX -= 100;
+    // if (endX > this.canvas.width) (endX %= 100) + this.canvas.width;
+
+    let startY = this.canvas.height / 2 - player.y;
+    if (startY < 0) -(startY %= 100);
+    let endY = this.canvas.height / 2 + this.gameHeight - player.y;
+    while (endY >= this.canvas.height + 100) endY -= 100;
+    // if (endY > this.canvas.height) (endY %= 100) + this.canvas.height;
     // Vert lines
-    for (let x = playerPos.x; x < this.canvas.width; x += LINEGAP) {
+    for (let x = startX; x <= endX; x += 100) {
       ctx.beginPath();
-      ctx.moveTo(x, 0); // Move the pen to (30, 50)
-      ctx.lineTo(x, this.canvas.height); // Draw a line to (150, 100)
+      ctx.moveTo(x, startY); // Move the pen to (30, 50)
+      ctx.lineTo(x, endY); // Draw a line to (150, 100)
       ctx.stroke(); // Render the path
     }
-    for (let y = playerPos.y; y < this.canvas.height; y += LINEGAP) {
+    // horiz lines
+    for (let y = startY; y <= endY; y += 100) {
       ctx.beginPath();
-      ctx.moveTo(0, y); // Move the pen to (30, 50)
-      ctx.lineTo(this.canvas.width, y); // Draw a line to (150, 100)
+      ctx.moveTo(startX, y); // Move the pen to (30, 50)
+      ctx.lineTo(endX, y); // Draw a line to (150, 100)
       ctx.stroke(); // Render the path
     }
   }
 
   draw(state) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.drawGrid(state.playerPos);
+    this.drawGrid(state.player);
     this.drawPlayers(state.nearbyPlayers);
     if (state.relativeSnitch.x && state.relativeSnitch.y)
       this.drawSnitch(state.relativeSnitch);
   }
 
   drawPlayers(players) {
+    let myPlayer = {};
     for (let player of players) {
       if (player.id === this.playerId) {
-        this.ctx.globalAlpha = 1.0;
-        this.ctx.fillStyle = player.color;
-        this.ctx.fillRect(
-          this.canvas.width / 2 + (player.x - player.size / 2),
-          this.canvas.height / 2 + (player.y - player.size / 2),
-          player.size,
-          player.size
-        );
+        myPlayer = { ...player };
       } else {
         this.ctx.globalAlpha = 0.3;
         this.ctx.fillStyle = player.color;
@@ -99,6 +107,15 @@ class GoldenSnitchGame {
         this.ctx.globalAlpha = 1.0;
       }
     }
+
+    this.ctx.globalAlpha = 1.0;
+    this.ctx.fillStyle = myPlayer.color;
+    this.ctx.fillRect(
+      this.canvas.width / 2 + (myPlayer.x - myPlayer.size / 2),
+      this.canvas.height / 2 + (myPlayer.y - myPlayer.size / 2),
+      myPlayer.size,
+      myPlayer.size
+    );
   }
 
   drawSnitch(snitch) {
@@ -138,8 +155,10 @@ socket.emit("windowInfo", {
   height: window.innerHeight,
 });
 
-socket.on("id", (id) => {
-  game.playerId = id;
+socket.on("init", (info) => {
+  game.playerId = info.id;
+  game.gameWidth = info.gameWidth;
+  game.gameHeight = info.gameHeight;
 });
 
 socket.on("gameState", (state) => {
