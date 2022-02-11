@@ -7,8 +7,8 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 
-const canvasWidth = 12800;
-const canvasHeight = 12800;
+const canvasWidth = 500;
+const canvasHeight = 500;
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -33,7 +33,7 @@ io.on("connection", (socket) => {
     x: canvasWidth / 2,
     y: canvasHeight / 2,
     size: 25,
-    speed: 4,
+    speed: 4 / 10,
     color: color,
     input: { up: false, down: false, left: false, right: false },
   });
@@ -92,9 +92,11 @@ const updateSnitch = () => {
     startSnitchTimeout();
     // Get random velocity for x and y (-8 to 8)
     snitch.xVel =
-      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 9 + 1);
+      (Math.round(Math.random()) * 2 - 1) *
+      Math.floor(Math.random() * (9 / 10) + 1);
     snitch.yVel =
-      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 9 + 1);
+      (Math.round(Math.random()) * 2 - 1) *
+      Math.floor(Math.random() * (9 / 10) + 1);
   }
   // Inverse the velocity if the snitch is running into a wall
   if (snitch.yVel < 0 && snitch.y - snitch.radius <= 0) snitch.yVel *= -1;
@@ -142,55 +144,58 @@ const checkWin = () => {
   return -1;
 };
 
-let tick;
+let tickInterval;
+
+const tick = () => {
+  updatePlayers();
+  updateSnitch();
+  for (let player of players) {
+    let bgPos = {
+      sx: player.x - player.windowWidth / 2,
+      sy: player.y - player.windowHeight / 2,
+    };
+    let temp = players.filter((item) => {
+      if (
+        item.x >= player.x - (player.windowWidth / 2 + 30) &&
+        item.x <= player.x + (player.windowWidth / 2 + 30) &&
+        item.y >= player.y - (player.windowHeight / 2 + 30) &&
+        item.y <= player.y + (player.windowHeight / 2 + 30)
+      )
+        return true;
+    });
+    let nearbyPlayers = temp.filter((it) => true).map((obj) => ({ ...obj }));
+    // Define positions relative to the current player
+    for (let nearbyPlayer of nearbyPlayers) {
+      nearbyPlayer.x -= player.x;
+      nearbyPlayer.y -= player.y;
+    }
+    let relativeSnitch = {};
+    if (
+      snitch.x >= player.x - (player.windowWidth / 2 + 30) &&
+      snitch.x <= player.x + (player.windowWidth / 2 + 30) &&
+      snitch.y >= player.y - (player.windowHeight / 2 + 30) &&
+      snitch.y <= player.y + (player.windowHeight / 2 + 30)
+    ) {
+      relativeSnitch.x = snitch.x - player.x;
+      relativeSnitch.y = snitch.y - player.y;
+      relativeSnitch.radius = snitch.radius;
+    }
+    io.to(player.id).emit("gameState", {
+      playerPos: { x: player.x, y: player.y },
+      nearbyPlayers: nearbyPlayers,
+      relativeSnitch: relativeSnitch,
+      bgPos: bgPos,
+    });
+  }
+  let winner = checkWin();
+  if (winner != -1) handleWin(winner);
+};
 
 const startGame = () => {
-  tick = setInterval(() => {
-    updatePlayers();
-    updateSnitch();
-    for (let player of players) {
-      let bgPos = {
-        sx: player.x - player.windowWidth / 2,
-        sy: player.y - player.windowHeight / 2,
-      };
-      let temp = players.filter((item) => {
-        if (
-          item.x >= player.x - (player.windowWidth / 2 + 30) &&
-          item.x <= player.x + (player.windowWidth / 2 + 30) &&
-          item.y >= player.y - (player.windowHeight / 2 + 30) &&
-          item.y <= player.y + (player.windowHeight / 2 + 30)
-        )
-          return true;
-      });
-      let nearbyPlayers = temp.filter((it) => true).map((obj) => ({ ...obj }));
-      // Define positions relative to the current player
-      for (let nearbyPlayer of nearbyPlayers) {
-        nearbyPlayer.x -= player.x;
-        nearbyPlayer.y -= player.y;
-      }
-      let relativeSnitch = { x: null, y: null, radius: null };
-      if (
-        snitch.x >= player.x - (player.windowWidth / 2 + 30) &&
-        snitch.x <= player.x + (player.windowWidth / 2 + 30) &&
-        snitch.y >= player.y - (player.windowHeight / 2 + 30) &&
-        snitch.y <= player.y + (player.windowHeight / 2 + 30)
-      ) {
-        relativeSnitch.x = snitch.x - player.x;
-        relativeSnitch.y = snitch.y - player.y;
-        relativeSnitch.radius = snitch.radius;
-      }
-      io.to(player.id).emit("gameState", {
-        nearbyPlayers: nearbyPlayers,
-        relativeSnitch: relativeSnitch,
-        bgPos: bgPos,
-      });
-    }
-    let winner = checkWin();
-    if (winner != -1) handleWin(winner);
-  }, 10);
+  tickInterval = setInterval(() => tick(), 1);
 };
 const handleWin = (id) => {
-  clearInterval(tick);
+  clearInterval(tickInterval);
   for (let player of players) {
     player.x = canvasWidth / 2;
     player.y = canvasHeight / 2;

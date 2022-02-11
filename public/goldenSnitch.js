@@ -1,6 +1,8 @@
+const LINEGAP = 100;
 class GoldenSnitchGame {
   constructor(canvas, ctx) {
     this.canvas = canvas;
+    /** @type {HTMLCanvasElement} */
     this.ctx = ctx;
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
@@ -46,19 +48,28 @@ class GoldenSnitchGame {
     });
   }
 
+  drawGrid(playerPos) {
+    this.ctx.globalAlpha = 0.5;
+    ctx.fillStyle = "grey";
+
+    // Vert lines
+    for (let x = playerPos.x; x < this.canvas.width; x += LINEGAP) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0); // Move the pen to (30, 50)
+      ctx.lineTo(x, this.canvas.height); // Draw a line to (150, 100)
+      ctx.stroke(); // Render the path
+    }
+    for (let y = playerPos.y; y < this.canvas.height; y += LINEGAP) {
+      ctx.beginPath();
+      ctx.moveTo(0, y); // Move the pen to (30, 50)
+      ctx.lineTo(this.canvas.width, y); // Draw a line to (150, 100)
+      ctx.stroke(); // Render the path
+    }
+  }
+
   draw(state) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.drawImage(
-      this.backgroundImg,
-      state.bgPos.sx,
-      state.bgPos.sy,
-      this.canvas.width,
-      this.canvas.height,
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height
-    );
+    this.drawGrid(state.playerPos);
     this.drawPlayers(state.nearbyPlayers);
     if (state.relativeSnitch.x && state.relativeSnitch.y)
       this.drawSnitch(state.relativeSnitch);
