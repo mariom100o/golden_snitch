@@ -1,4 +1,3 @@
-const { time } = require("console");
 const express = require("express");
 const http = require("http");
 const app = express();
@@ -40,12 +39,14 @@ io.on("connection", (socket) => {
   });
 
   socket.on("windowInfo", (windowSize) => {
+    console.log("Got window info");
     let i = players.findIndex((item) => item.id === socket.id);
     players[i].windowWidth = windowSize.width;
     players[i].windowHeight = windowSize.height;
   });
 
   socket.on("playerInput", (input) => {
+    console.log("Got player info");
     players.find((item) => item.id === socket.id).input = input;
   });
 
