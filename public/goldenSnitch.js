@@ -56,7 +56,7 @@ class GoldenSnitchGame {
   draw(state) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     // this.drawGrid(state.playerPos);
-    this.drawPlayers(state.nearbyPlayers);
+    // this.drawPlayers(state.nearbyPlayers);
     if (state.relativeSnitch.x && state.relativeSnitch.y)
       this.drawSnitch(state.relativeSnitch);
   }
