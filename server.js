@@ -1,3 +1,4 @@
+const { time } = require("console");
 const express = require("express");
 const http = require("http");
 const app = express();
@@ -33,7 +34,7 @@ io.on("connection", (socket) => {
     x: canvasWidth / 2,
     y: canvasHeight / 2,
     size: 25,
-    speed: 4,
+    speed: 6.67,
     color: color,
     input: { up: false, down: false, left: false, right: false },
   });
@@ -80,21 +81,13 @@ const updatePlayers = () => {
   }
 };
 
-const startSnitchTimeout = () => {
-  snitch.canChangeDir = false;
-  setTimeout(() => {
-    snitch.canChangeDir = true;
-  }, 250);
-};
-
 const updateSnitch = () => {
-  if (snitch.canChangeDir) {
-    startSnitchTimeout();
+  if (new Date().getTime() % 250 == 0) {
     // Get random velocity for x and y (-8 to 8)
     snitch.xVel =
-      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 9 + 1);
+      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15 + 1);
     snitch.yVel =
-      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 9 + 1);
+      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 15 + 1);
   }
   // Inverse the velocity if the snitch is running into a wall
   if (snitch.yVel < 0 && snitch.y - snitch.radius <= 0) snitch.yVel *= -1;
@@ -148,10 +141,6 @@ const tick = () => {
   updatePlayers();
   updateSnitch();
   for (let player of players) {
-    let bgPos = {
-      sx: player.x - player.windowWidth / 2,
-      sy: player.y - player.windowHeight / 2,
-    };
     let temp = players.filter((item) => {
       if (
         item.x >= player.x - (player.windowWidth / 2 + 30) &&
@@ -182,7 +171,6 @@ const tick = () => {
       playerPos: { x: player.x, y: player.y },
       nearbyPlayers: nearbyPlayers,
       relativeSnitch: relativeSnitch,
-      bgPos: bgPos,
     });
   }
   let winner = checkWin();
@@ -190,7 +178,7 @@ const tick = () => {
 };
 
 const startGame = () => {
-  tickInterval = setInterval(() => tick(), 10);
+  tickInterval = setInterval(() => tick(), 1000 / 60);
 };
 const handleWin = (id) => {
   clearInterval(tickInterval);
@@ -205,8 +193,8 @@ const handleWin = (id) => {
     x: 10,
     y: 10,
     radius: 10,
-    xVel: 5,
-    yVel: 5,
+    xVel: 8,
+    yVel: 8,
     canChangeDir: true,
   };
   io.emit("gameEnd", id);

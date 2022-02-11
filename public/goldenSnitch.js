@@ -7,20 +7,6 @@ class GoldenSnitchGame {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     this.playerId;
-    this.backgroundImg = new Image();
-    this.backgroundImg.src = "/images/gridMap.jpg";
-    //this.ctx.fillStyle = this.backgoundPtrn;
-    this.ctx.drawImage(
-      this.backgroundImg,
-      12800 - this.canvas.width,
-      12800 - this.canvas.height,
-      this.canvas.width,
-      this.canvas.height,
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height
-    );
 
     this.input = { up: false, down: false, left: false, right: false };
     window.addEventListener("keydown", (e) => {
