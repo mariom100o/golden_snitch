@@ -33,7 +33,7 @@ io.on("connection", (socket) => {
     x: canvasWidth / 2,
     y: canvasHeight / 2,
     size: 25,
-    speed: 4 / 10,
+    speed: 4,
     color: color,
     input: { up: false, down: false, left: false, right: false },
   });
@@ -92,11 +92,9 @@ const updateSnitch = () => {
     startSnitchTimeout();
     // Get random velocity for x and y (-8 to 8)
     snitch.xVel =
-      (Math.round(Math.random()) * 2 - 1) *
-      Math.floor(Math.random() * (9 / 10) + 1);
+      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 9 + 1);
     snitch.yVel =
-      (Math.round(Math.random()) * 2 - 1) *
-      Math.floor(Math.random() * (9 / 10) + 1);
+      (Math.round(Math.random()) * 2 - 1) * Math.floor(Math.random() * 9 + 1);
   }
   // Inverse the velocity if the snitch is running into a wall
   if (snitch.yVel < 0 && snitch.y - snitch.radius <= 0) snitch.yVel *= -1;
@@ -192,7 +190,7 @@ const tick = () => {
 };
 
 const startGame = () => {
-  tickInterval = setInterval(() => tick(), 1);
+  tickInterval = setInterval(() => tick(), 10);
 };
 const handleWin = (id) => {
   clearInterval(tickInterval);
