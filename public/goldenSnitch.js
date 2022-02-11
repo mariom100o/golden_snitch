@@ -10,19 +10,34 @@ class GoldenSnitchGame {
 
     this.input = { up: false, down: false, left: false, right: false };
     window.addEventListener("keydown", (e) => {
+      let prevInput = { ...this.input };
       if (e.key === "w") this.input.up = true;
       if (e.key === "s") this.input.down = true;
       if (e.key === "a") this.input.left = true;
       if (e.key === "d") this.input.right = true;
 
-      socket.emit("playerInput", this.input);
+      if (
+        prevInput.up != this.input.up ||
+        prevInput.down != this.input.down ||
+        prevInput.left != this.input.left ||
+        prevInput.right != this.input.right
+      )
+        socket.emit("playerInput", this.input);
     });
     window.addEventListener("keyup", (e) => {
+      let prevInput = { ...this.input };
       if (e.key === "w") this.input.up = false;
       if (e.key === "s") this.input.down = false;
       if (e.key === "a") this.input.left = false;
       if (e.key === "d") this.input.right = false;
-      socket.emit("playerInput", this.input);
+
+      if (
+        prevInput.up != this.input.up ||
+        prevInput.down != this.input.down ||
+        prevInput.left != this.input.left ||
+        prevInput.right != this.input.right
+      )
+        socket.emit("playerInput", this.input);
     });
     window.addEventListener("resize", () => {
       this.canvas.width = window.innerWidth;
@@ -55,8 +70,8 @@ class GoldenSnitchGame {
 
   draw(state) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    // this.drawGrid(state.playerPos);
-    // this.drawPlayers(state.nearbyPlayers);
+    this.drawGrid(state.playerPos);
+    this.drawPlayers(state.nearbyPlayers);
     if (state.relativeSnitch.x && state.relativeSnitch.y)
       this.drawSnitch(state.relativeSnitch);
   }
@@ -134,3 +149,5 @@ socket.on("gameState", (state) => {
 socket.on("gameEnd", (winner) => {
   game.handleWin(winner);
 });
+
+// TODO: Only send key up/down updates

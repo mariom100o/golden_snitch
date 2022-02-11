@@ -47,13 +47,13 @@ io.on("connection", (socket) => {
 
   socket.on("playerInput", (input) => {
     console.log("Got player info");
-    players.find((item) => item.id === socket.id).input = input;
+    // players.find((item) => item.id === socket.id).input = input;
   });
 
   socket.on("disconnect", () => {
-    let i = players.findIndex((item) => item.id === socket.id);
-    colors.push(players[i].color);
-    players.splice(i, 1);
+    // let i = players.findIndex((item) => item.id === socket.id);
+    // colors.push(players[i].color);
+    // players.splice(i, 1);
     console.log("user disconnected");
   });
 });
@@ -142,21 +142,21 @@ const tick = () => {
   updatePlayers();
   updateSnitch();
   for (let player of players) {
-    // let temp = players.filter((item) => {
-    //   if (
-    //     item.x >= player.x - (player.windowWidth / 2 + 30) &&
-    //     item.x <= player.x + (player.windowWidth / 2 + 30) &&
-    //     item.y >= player.y - (player.windowHeight / 2 + 30) &&
-    //     item.y <= player.y + (player.windowHeight / 2 + 30)
-    //   )
-    //     return true;
-    // });
-    // let nearbyPlayers = temp.filter((it) => true).map((obj) => ({ ...obj }));
-    // // Define positions relative to the current player
-    // for (let nearbyPlayer of nearbyPlayers) {
-    //   nearbyPlayer.x -= player.x;
-    //   nearbyPlayer.y -= player.y;
-    // }
+    let temp = players.filter((item) => {
+      if (
+        item.x >= player.x - (player.windowWidth / 2 + 30) &&
+        item.x <= player.x + (player.windowWidth / 2 + 30) &&
+        item.y >= player.y - (player.windowHeight / 2 + 30) &&
+        item.y <= player.y + (player.windowHeight / 2 + 30)
+      )
+        return true;
+    });
+    let nearbyPlayers = temp.filter((it) => true).map((obj) => ({ ...obj }));
+    // Define positions relative to the current player
+    for (let nearbyPlayer of nearbyPlayers) {
+      nearbyPlayer.x -= player.x;
+      nearbyPlayer.y -= player.y;
+    }
     let relativeSnitch = {};
     if (
       snitch.x >= player.x - (player.windowWidth / 2 + 30) &&
@@ -170,7 +170,7 @@ const tick = () => {
     }
     io.to(player.id).emit("gameState", {
       playerPos: { x: player.x, y: player.y },
-      // nearbyPlayers: nearbyPlayers,
+      nearbyPlayers: nearbyPlayers,
       relativeSnitch: relativeSnitch,
     });
   }
@@ -203,3 +203,5 @@ const handleWin = (id) => {
 };
 
 startGame();
+
+// Make players a map from ID -> everythin else
