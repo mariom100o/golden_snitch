@@ -7,8 +7,8 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 
-const canvasWidth = 300;
-const canvasHeight = 500;
+const canvasWidth = 700;
+const canvasHeight = 700;
 
 app.use(express.static(path.join(__dirname, "public")));
 
